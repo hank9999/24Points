@@ -37,13 +37,16 @@ class Solution:
     def get_answer(self):
         return self.solutions
 
+    def is_have_answer(self):
+        return len(self.solutions) >= 1
+
     def get_answer_top5_text(self):
         if len(self.solutions) == 0:
             return '无答案'
         answer = ''
         count = 1
         for i in self.solutions:
-            answer += f'{i}\n'
+            answer += f'{i[1:-1]}\n'
             count += 1
             if count >= 6:
                 break
@@ -51,7 +54,7 @@ class Solution:
 
 
 cache = {}
-solution = Solution()
+solution_object = Solution()
 
 
 @bot.command(regex=r'(?:24点)')
@@ -59,8 +62,15 @@ async def twenty_four_init(msg: Message):
     global cache
     cache_id = f'{msg.ctx.guild.id}-{msg.ctx.channel.id}-{msg.author_id}'
     if cache_id not in cache:
-        cards = [random.randint(1, 13) for i in range(4)]
-        cache[cache_id] = {'cards': cards, 'cards_source': cards.copy(), 'time': time.time()}
+        solution = copy.deepcopy(solution_object)
+        while True:
+            cards = [random.randint(1, 13) for i in range(4)]
+            solution.clear()
+            solution.point24(cards)
+            if solution.is_have_answer():
+                break
+        cache[cache_id] = {'cards': cards, 'time': time.time(), 'answer': solution.get_answer_top5_text()}
+        del solution
         await msg.reply(f'来一把紧张刺激的 24 点！输入算式进行推导，输入「24退出」结束游戏')
         await msg.reply(f'现在你手上有：{cards}，怎么凑 24 点呢？')
     else:
@@ -70,22 +80,19 @@ async def twenty_four_init(msg: Message):
 @bot.command(regex=r'(?:24退出)')
 async def twenty_four_exit(msg: Message):
     global cache
-    global solution
     cache_id = f'{msg.ctx.guild.id}-{msg.ctx.channel.id}-{msg.author_id}'
     if cache_id not in cache:
         await msg.reply(f'没有正在进行的24点游戏')
     else:
-        solution.clear()
-        solution.point24(cache[cache_id]['cards_source'])
         time_used = int(time.time() - cache[cache_id]['time'])
-        await msg.reply(f'24点游戏已退出, 这不再来一把？\n用时: {time_used}s\n{solution.get_answer_top5_text()}')
+        answer = cache[cache_id]['answer']
+        await msg.reply(f'24点游戏已退出, 这不再来一把？\n用时: {time_used}s\n{answer}')
         del cache[cache_id]
 
 
 @bot.command(regex=r'[\d\+\-\\\*\/]+')
 async def twenty_four_step(msg: Message):
     global cache
-    global solution
     content = msg.content.replace('\\*', '*')
     cache_id = f'{msg.ctx.guild.id}-{msg.ctx.channel.id}-{msg.author_id}'
     if cache_id not in cache:
@@ -106,10 +113,9 @@ async def twenty_four_step(msg: Message):
         await msg.reply(f'你赢啦！\n用时: {time_used}s')
         del cache[cache_id]
     elif len(cards) == 1 and cards[0] != 24:
-        solution.clear()
-        solution.point24(cache[cache_id]['cards_source'])
         time_used = int(time.time() - cache[cache_id]['time'])
-        await msg.reply(f'你输啦！\n用时: {time_used}s\n{solution.get_answer_top5_text()}')
+        answer = cache[cache_id]['answer']
+        await msg.reply(f'你输啦！\n用时: {time_used}s\n{answer}')
         del cache[cache_id]
     else:
         await msg.reply(f'现在你手上有：{cards}，怎么凑 24 点呢？')
