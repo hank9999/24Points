@@ -73,8 +73,9 @@ async def twenty_four_exit(msg: Message):
         solution = Solution()
         solution.point24(cache[cache_id]['cards_source'])
         time_used = int(time.time() - cache[cache_id]['time'])
-        del cache[cache_id]
         await msg.reply(f'24点游戏已退出, 这不再来一把？\n用时: {time_used}s\n{solution.get_answer_top5_text()}')
+        del cache[cache_id]
+        del solution
 
 
 @bot.command(regex=r'[\d\+\-\\\*\/]+')
@@ -105,6 +106,7 @@ async def twenty_four_step(msg: Message):
         time_used = int(time.time() - cache[cache_id]['time'])
         await msg.reply(f'你输啦！\n用时: {time_used}s\n{solution.get_answer_top5_text()}')
         del cache[cache_id]
+        del solution
     else:
         await msg.reply(f'现在你手上有：{cards}，怎么凑 24 点呢？')
 
