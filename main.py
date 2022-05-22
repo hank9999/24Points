@@ -134,9 +134,9 @@ async def add_list(user_id, time_used):
         with open('top.json', 'r') as f:
             data = json.loads(f.read())
         if len(data) == 0:
-            data['user_id'] = time_used
+            data[user_id] = time_used
         elif time_used < data[list(data.keys())[len(data)-1]]:
-            data['user_id'] = time_used
+            data[user_id] = time_used
         data = dict(sorted(data.items(), key=lambda x: x[1]))
         with open('top.json', 'w') as f:
             f.write(json.dumps(data))
@@ -160,7 +160,8 @@ async def twenty_four_list(msg: Message):
         for k, v in d.items():
             user = await msg.gate.request('GET', 'user/view', params={'user_id': k})
             name = f"{user['username']}#{user['identify_num']}"
-            text += f'第{count}: {name} 用时: {v}s'
+            text += f'第{count}: {name} 用时: {v}s\n'
+            count += 1
     else:
         text = '暂无数据'
     c = Card()
