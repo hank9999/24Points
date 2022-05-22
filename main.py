@@ -68,15 +68,14 @@ async def twenty_four_init(msg: Message):
     if cache_id not in cache:
         solution = copy.deepcopy(solution_object)
         while True:
-            cards = [random.randint(1, 13) for i in range(4)]
+            cards = [random.randint(1, 13) for _ in range(4)]
             solution.clear()
             solution.point24(cards)
             if solution.is_have_answer():
                 break
         cache[cache_id] = {'cards': cards, 'time': time.time(), 'answer': solution.get_answer_top5_text()}
         del solution
-        await msg.reply(f'来一把紧张刺激的 24 点！输入算式进行推导，输入「24退出」结束游戏')
-        await msg.reply(f'现在你手上有：{cards}，怎么凑 24 点呢？')
+        await msg.reply(f'来一把紧张刺激的 24 点！输入算式进行推导，输入「24退出」结束游戏\n现在你手上有：{cards}，怎么凑 24 点呢？')
     else:
         await msg.reply(f'24点游戏还没结束哦~')
 
