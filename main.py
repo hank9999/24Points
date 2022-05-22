@@ -139,6 +139,15 @@ async def add_list(user_id, time_used):
             if user_id not in data or (user_id in data and float(time_used) < float(data[user_id])):
                 data[user_id] = time_used
         data = dict(sorted(data.items(), key=lambda x: float(x[1])))
+        if len(data) > 10:
+            count = 1
+            data_new = {}
+            for k, v in data:
+                data_new[k] = v
+                count += 1
+                if count >= 11:
+                    break
+            data = data_new
         with open('top.json', 'w') as f:
             f.write(json.dumps(data))
 
