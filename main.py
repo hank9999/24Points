@@ -135,6 +135,8 @@ async def add_list(user_id, time_used):
             data = json.loads(f.read())
         if len(data) == 0:
             data[user_id] = time_used
+        elif len(data) < 10 and (user_id not in data):
+            data[user_id] = time_used
         elif float(time_used) < float(data[list(data.keys())[len(data)-1]]):
             if user_id not in data or (user_id in data and float(time_used) < float(data[user_id])):
                 data[user_id] = time_used
