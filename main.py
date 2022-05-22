@@ -1,9 +1,13 @@
 # -*- encoding : utf-8 -*-
 import copy
+import json
+import os
 import random
 import re
 import time
+
 from khl import Bot, Message, Cert
+from khl.card import Card, Types, Module, CardMessage, Element
 
 # webhook
 # bot = Bot(cert=Cert(token='token', verify_token='verify_token'), port=3000,
@@ -84,7 +88,7 @@ async def twenty_four_exit(msg: Message):
     if cache_id not in cache:
         await msg.reply(f'没有正在进行的24点游戏')
     else:
-        time_used = int(time.time() - cache[cache_id]['time'])
+        time_used = '%.2f' % (time.time() - cache[cache_id]['time'])
         answer = cache[cache_id]['answer']
         await msg.reply(f'24点游戏已退出, 这不再来一把？\n用时: {time_used}s\n{answer}')
         del cache[cache_id]
@@ -109,16 +113,61 @@ async def twenty_four_step(msg: Message):
     cards = cards_new
     cache[cache_id]['cards'] = cards
     if len(cards) == 1 and cards[0] == 24:
-        time_used = int(time.time() - cache[cache_id]['time'])
+        time_used = '%.2f' % (time.time() - cache[cache_id]['time'])
         await msg.reply(f'你赢啦！\n用时: {time_used}s')
         del cache[cache_id]
+        await add_list(msg.author_id, time_used)
     elif len(cards) == 1 and cards[0] != 24:
-        time_used = int(time.time() - cache[cache_id]['time'])
+        time_used = '%.2f' % (time.time() - cache[cache_id]['time'])
         answer = cache[cache_id]['answer']
         await msg.reply(f'你输啦！\n用时: {time_used}s\n{answer}')
         del cache[cache_id]
     else:
         await msg.reply(f'现在你手上有：{cards}，怎么凑 24 点呢？')
+
+
+async def add_list(user_id, time_used):
+    if not os.path.exists('top.json'):
+        with open('top.json', 'w') as f:
+            f.write(json.dumps({user_id: time_used}))
+    else:
+        with open('top.json', 'r') as f:
+            data = json.loads(f.read())
+        if len(data) == 0:
+            data['user_id'] = time_used
+        elif time_used < data[list(data.keys())[len(data)-1]]:
+            data['user_id'] = time_used
+        data = dict(sorted(data.items(), key=lambda x: x[1]))
+        with open('top.json', 'w') as f:
+            f.write(json.dumps(data))
+
+
+async def get_list():
+    if not os.path.exists('top.json'):
+        return {}
+    else:
+        with open('top.json', 'r') as f:
+            data = json.loads(f.read())
+        return data
+
+
+@bot.command(regex=r'(?:24排行榜)')
+async def twenty_four_list(msg: Message):
+    d = await get_list()
+    if len(d) != 0:
+        text = ''
+        count = 1
+        for k, v in d.items():
+            user = await msg.gate.request('GET', 'user/view', params={'user_id': k})
+            name = f"{user['username']}#{user['identify_num']}"
+            text += f'第{count}: {name} 用时: {v}s'
+    else:
+        text = '暂无数据'
+    c = Card()
+    c.theme = Types.Theme.WARNING
+    c.append(Module.Header('24点前10排行榜'))
+    c.append(Module.Section(Element.Text(content=text, type=Types.Text.KMD)))
+    await msg.reply(CardMessage(c))
 
 
 if __name__ == '__main__':
