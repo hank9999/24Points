@@ -144,7 +144,7 @@ async def add_list(user_id, time_used):
         if len(data) > 10:
             count = 1
             data_new = {}
-            for k, v in data:
+            for k, v in data.items():
                 data_new[k] = v
                 count += 1
                 if count >= 11:
