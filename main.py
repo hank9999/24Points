@@ -64,6 +64,9 @@ solution_object = Solution()
 @bot.command(regex=r'(?:24点)')
 async def twenty_four_init(msg: Message):
     global cache
+    if msg.author.bot:
+        await msg.reply('暂不支持机器人游玩')
+        return
     cache_id = f'{msg.ctx.guild.id}-{msg.ctx.channel.id}-{msg.author_id}'
     if cache_id not in cache:
         solution = copy.deepcopy(solution_object)
@@ -83,6 +86,9 @@ async def twenty_four_init(msg: Message):
 @bot.command(regex=r'(?:24退出)')
 async def twenty_four_exit(msg: Message):
     global cache
+    if msg.author.bot:
+        await msg.reply('暂不支持机器人游玩')
+        return
     cache_id = f'{msg.ctx.guild.id}-{msg.ctx.channel.id}-{msg.author_id}'
     if cache_id not in cache:
         await msg.reply(f'没有正在进行的24点游戏')
@@ -99,6 +105,9 @@ async def twenty_four_step(msg: Message):
     content = msg.content.replace('\\*', '*')
     cache_id = f'{msg.ctx.guild.id}-{msg.ctx.channel.id}-{msg.author_id}'
     if cache_id not in cache:
+        return
+    if msg.author.bot:
+        await msg.reply('暂不支持机器人游玩')
         return
     n_c = copy.deepcopy(cache[cache_id]['cards'])
     used = [int(i) for i in re.findall(r'\d+', content)]
@@ -164,6 +173,9 @@ async def get_list():
 
 @bot.command(regex=r'(?:24排行榜)')
 async def twenty_four_list(msg: Message):
+    if msg.author.bot:
+        await msg.reply('暂不支持机器人游玩')
+        return
     d = await get_list()
     if len(d) != 0:
         text = ''
