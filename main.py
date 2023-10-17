@@ -21,7 +21,7 @@ bot = Bot(token='token')
 cache = {}
 
 
-@bot.command(regex=r'(?:24点)')
+@bot.command(regex=r'(?:.|\/|。)(?:24开始)')
 async def twenty_four_init(msg: Message):
     global cache
     if msg.author.bot:
@@ -43,7 +43,7 @@ async def twenty_four_init(msg: Message):
         await msg.reply(f'24点游戏还没结束哦~')
 
 
-@bot.command(regex=r'(?:24退出)')
+@bot.command(regex=r'(?:.|\/|。)(?:24退出)')
 async def twenty_four_exit(msg: Message):
     global cache
     if msg.author.bot:
@@ -136,7 +136,7 @@ async def get_list():
         return data
 
 
-@bot.command(regex=r'(?:24排行榜)')
+@bot.command(regex=r'(?:.|\/|。)(?:24排行榜)')
 async def twenty_four_list(msg: Message):
     if msg.author.bot:
         await msg.reply('暂不支持机器人游玩')
