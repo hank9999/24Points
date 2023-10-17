@@ -190,7 +190,7 @@ async def twenty_four_list(msg: Message):
     c = Card()
     c.theme = Types.Theme.WARNING
     c.append(Module.Header('24点前10排行榜'))
-    c.append(Module.Section(Element.Text(content=text, text_type=Types.Text.KMD)))
+    c.append(Module.Section(Element.Text(content=text)))
     await msg.reply(CardMessage(c))
 
 
