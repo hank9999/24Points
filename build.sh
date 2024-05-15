@@ -1,0 +1,1 @@
+gopy build --output=solution24 --vm=python solution24
