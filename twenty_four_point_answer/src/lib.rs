@@ -13,14 +13,14 @@ lazy_static! {
         m
     };
 }
-fn find_solution_expressions(nums: Vec<u32>) -> Vec<String> {
+fn find_solution_expressions(nums: Vec<u32>, expressions: &mut HashSet<String>) {
     let mut stack = vec![(nums, String::new())];
-    let mut expressions = vec![];
 
-    while let Some((current_nums, expr)) = stack.pop() {
+    while !stack.is_empty() {
+        let (current_nums, expr) = stack.pop().unwrap();
         if current_nums.len() == 1 {
             if current_nums[0] == 24 {
-                expressions.push(expr);
+                expressions.insert(expr);
             }
             continue;
         }
@@ -31,19 +31,24 @@ fn find_solution_expressions(nums: Vec<u32>) -> Vec<String> {
                     continue;
                 }
 
-                let mut next_nums: Vec<u32> = current_nums.iter()
-                    .enumerate()
-                    .filter(|&(k, _)| k != i && k != j)
-                    .map(|(_, &x)| x)
-                    .collect();
+                let mut next_nums: Vec<u32> = Vec::with_capacity(current_nums.len() - 1);
+                for (k, &v) in current_nums.iter().enumerate() {
+                    if k != i && k != j {
+                        next_nums.push(v);
+                    }
+                }
 
                 for (op, func) in OPERATIONS.iter() {
                     if *op == "/" && num2 == 0 {
                         continue;
                     }
 
+                    if current_nums.len() == 2 && num1 > 24 && (*op == "*" || *op == "+") {
+                        continue;
+                    }
+
                     let result = func(num1 as f64, num2 as f64);
-                    if result < 0.0 || result.is_infinite() || result.fract().abs() > 0.0 {
+                    if result < 0.0 || result.is_infinite() || result.fract() != 0.0 {
                         continue;
                     }
 
@@ -62,51 +67,57 @@ fn find_solution_expressions(nums: Vec<u32>) -> Vec<String> {
             }
         }
     }
-
-    expressions
 }
 
-fn sort_expr(expr: &str) -> String {
-    let expr = expr.replace("(", "").replace(")", "");
-    let op = if expr.contains("+") {
-        "+"
-    } else if expr.contains("-") {
-        "-"
-    } else if expr.contains("*") {
-        "*"
-    } else {
-        "/"
-    };
-    let expr_split_op = expr.split(&format!(" {} ", op)).collect::<Vec<&str>>();
-    let expr_split_eq = expr_split_op[1].split(" = ").collect::<Vec<&str>>();
-    let mut nums = vec![expr_split_op[0], expr_split_eq[0]];
-    let result = expr_split_eq[1];
-    if op == "+" || op == "*" {
-        nums.sort();
-    }
-    return format!("({} {} {}) = {}", nums[0], op, nums[1], result);
-}
-
-fn deduplicate(expressions: Vec<String>) -> Vec<String> {
-    let mut unique_expressions: HashSet<String> = HashSet::new();
-
+fn deduplicate(expressions: HashSet<String>, unique_expressions: &mut HashSet<String>) {
     for expression in expressions {
         let mut expr_list = vec![];
+        let mut buffer = String::with_capacity(2);
         for expr in expression.split(" -> ") {
-            expr_list.push(sort_expr(expr));
+            let mut op: char = '+';
+            let mut num1 = String::with_capacity(2);
+            let mut num2 = String::with_capacity(2);
+            for sc in expr.chars() {
+                if sc == '(' || sc == ')' || sc == ' ' {
+                    continue;
+                }
+                if sc == '+' || sc == '-' || sc == '*' || sc == '/' {
+                    op = sc;
+                    num1 = buffer.clone();
+                    buffer.clear();
+                    continue;
+                }
+                if sc == '=' {
+                    num2 = buffer.clone();
+                    buffer.clear();
+                    continue;
+                }
+                buffer.push(sc);
+            }
+            let result = buffer.clone();
+            buffer.clear();
+            let mut nums = vec![num1, num2];
+            if op == '+' || op == '*' {
+                nums.sort();
+            }
+            expr_list.push(format!("({} {} {}) = {}", nums[0], op, nums[1], result));
         }
         let expr3 = expr_list.pop().unwrap();
         unique_expressions.insert(format!("{} -> {} -> {}", expr_list[0], expr_list[1], expr3));
     }
-    return unique_expressions.into_iter().collect();
 }
 
 #[pyfunction]
 fn get_solution(nums: Vec<u32>) -> PyResult<Vec<String>> {
-    let expressions = find_solution_expressions(nums);
-    let mut unique_expressions = deduplicate(expressions);
-    unique_expressions.sort();
-    Ok(unique_expressions)
+    let mut expressions = HashSet::new();
+    let mut unique_expressions: HashSet<String> = HashSet::new();
+
+    find_solution_expressions(nums, &mut expressions);
+    deduplicate(expressions, &mut unique_expressions);
+
+    let mut result: Vec<String> = unique_expressions.into_iter().collect();
+    result.sort();
+    Ok(result)
 }
 
 #[pymodule]
