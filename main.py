@@ -55,7 +55,7 @@ async def twenty_four_exit(msg: Message):
     if cache_id not in cache:
         await msg.reply(f'没有正在进行的24点游戏')
     else:
-        time_used = '%.2f' % (time.time() - cache[cache_id]['time'])
+        time_used = '%.2f' % ((msg.msg_timestamp - cache[cache_id]['time']) / 1000)
         answer = cache[cache_id]['answer']
         if len(answer) > 5:
             answer = '\n'.join(answer[:5]).replace('*', '\\*')
