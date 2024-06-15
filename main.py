@@ -94,8 +94,14 @@ async def twenty_four_step(msg: Message):
         await add_list(msg.author_id, time_used)
     elif len(cards) == 1 and cards[0] != 24:
         answer = cache[cache_id]['answer']
-        await msg.reply(f'你输啦！\n用时: {time_used}s\n{answer}')
+        if len(answer) > 5:
+            answer = '\n'.join(answer[:5]).replace('*', '\\*')
+            answer += '\n答案仅显示前5种'
+        else:
+            answer = '\n'.join(answer[:5]).replace('*', '\\*')
         del cache[cache_id]
+        await msg.reply(f'你输啦！\n用时: {time_used}s\n{answer}')
+
     else:
         await msg.reply(f'(met){msg.author_id}(met) 现在你手上有：{cards}，怎么凑 24 点呢？')
 
