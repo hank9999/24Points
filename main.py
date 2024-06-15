@@ -34,11 +34,13 @@ async def twenty_four_init(msg: Message):
             answer = get_solution(cards)
             if len(answer) != 0:
                 break
-        cache[cache_id] = {'cards': cards, 'time': time.time(), 'answer': answer}
+        cache[cache_id] = {'cards': cards, 'time': 0.0, 'answer': answer}
         if len(cards) == 4:
             cache[cache_id]['original_cards'] = cards.copy()
-        await msg.reply(
-            f'来一把紧张刺激的 24 点！输入算式进行推导，输入「24退出」结束游戏\n(met){msg.author_id}(met) 现在你手上有：{cards}，怎么凑 24 点呢？')
+        response = await msg.reply(
+            f'来一把紧张刺激的 24 点！输入算式进行推导，输入「24退出」结束游戏\n(met){msg.author_id}(met) 现在你手上有：{cards}，怎么凑 24 点呢？'
+        )
+        cache[cache_id]['time'] = response['msg_timestamp']
     else:
         await msg.reply(f'24点游戏还没结束哦~')
 
@@ -85,13 +87,12 @@ async def twenty_four_step(msg: Message):
         cards_new.append(int(i))
     cards = cards_new
     cache[cache_id]['cards'] = cards
+    time_used = '%.2f' % ((msg.msg_timestamp - cache[cache_id]['time']) / 1000)
     if len(cards) == 1 and cards[0] == 24:
-        time_used = '%.2f' % (time.time() - cache[cache_id]['time'])
         await msg.reply(f'你赢啦！\n用时: {time_used}s')
         del cache[cache_id]
         await add_list(msg.author_id, time_used)
     elif len(cards) == 1 and cards[0] != 24:
-        time_used = '%.2f' % (time.time() - cache[cache_id]['time'])
         answer = cache[cache_id]['answer']
         await msg.reply(f'你输啦！\n用时: {time_used}s\n{answer}')
         del cache[cache_id]
