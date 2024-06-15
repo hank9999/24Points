@@ -1,1 +1,7 @@
 /.idea/
+/.vscode/
+venv/
+target/
+__pycache__
+Cargo.lock
+top.json
